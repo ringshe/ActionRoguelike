@@ -19,6 +19,10 @@ ASCharacter::ASCharacter()
 	CameraComponent = CreateDefaultSubobject<UCameraComponent>("CameraComponent");
 	CameraComponent->SetupAttachment(SpringArmComponent);
 
+	InteractionComp = CreateDefaultSubobject<USInteractionComponent>("InteractionComp");
+
+	AttributeComp = CreateDefaultSubobject<USAttributeComponent>("AttributeComp");
+
 	GetCharacterMovement()->bOrientRotationToMovement = true;
 
 	bUseControllerRotationYaw = false;
@@ -31,6 +35,7 @@ void ASCharacter::BeginPlay()
 	
 }
 
+// 前进
 void ASCharacter::MoveForward(float value)
 {
 	//UE_LOG(LogTemp, Warning, TEXT("Hello！%f"), value);
@@ -40,6 +45,7 @@ void ASCharacter::MoveForward(float value)
 	AddMovementInput(ControlRot.Vector(), value);
 }
 
+// 横向移动
 void ASCharacter::MoveRight(float value)
 {
 	FRotator ControlRot = GetControlRotation();
@@ -49,17 +55,37 @@ void ASCharacter::MoveRight(float value)
 	AddMovementInput(RightVector, value);
 }
 
+// 攻击
 void ASCharacter::PrimaryAttack()
 {
-	FVector HandleLocation = GetMesh()->GetSocketLocation("Muzzle_01");
+	PlayAnimMontage(AttackAnim);
 
-	FTransform SpwanTM = FTransform(GetControlRotation(), HandleLocation);
+	GetWorldTimerManager().SetTimer(TimerHandle_PrimaryAttack, this, &ASCharacter::PrimaryAttack_TimeElapsed, 0.2f);
 
-	FActorSpawnParameters SpawnParameter;
-	SpawnParameter.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 
-	GetWorld()->SpawnActor<AActor>(ProjectileClass, SpwanTM, SpawnParameter);
 }
+
+void ASCharacter::PrimaryAttack_TimeElapsed()
+{
+	if (ensure(ProjectileClass))
+	{
+		FVector HandleLocation = GetMesh()->GetSocketLocation("Muzzle_01");
+
+		FTransform SpwanTM = FTransform(GetControlRotation(), HandleLocation);
+
+		FActorSpawnParameters SpawnParameter;
+		SpawnParameter.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+		SpawnParameter.Instigator = this;
+		GetWorld()->SpawnActor<AActor>(ProjectileClass, SpwanTM, SpawnParameter);
+
+	}
+}
+
+void ASCharacter::PrimaryInteract()
+{
+	InteractionComp->PrimaryInteract();
+}
+
 
 // Called every frame
 void ASCharacter::Tick(float DeltaTime)
@@ -80,5 +106,8 @@ void ASCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponen
 	PlayerInputComponent->BindAxis("LookUp", this, &APawn::AddControllerPitchInput);
 
 	PlayerInputComponent->BindAction("PrimaryAttack", IE_Pressed, this, &ASCharacter::PrimaryAttack);
+	PlayerInputComponent->BindAction("PrimaryInteract", IE_Pressed, this, &ASCharacter::PrimaryInteract);
+
+	PlayerInputComponent->BindAction("Jump", IE_Pressed, this, &ASCharacter::Jump);
 }
 
