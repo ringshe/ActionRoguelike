@@ -1,9 +1,14 @@
+
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
 #include "SInteractionComponent.h"
 #include "SGameplayInterface.h"
 #include "DrawDebugHelpers.h"
+#include "SCharacter.h"
+#include "Camera/CameraComponent.h"
+#include "CollisionQueryParams.h"
+#include "CollisionShape.h"
 
 
 
@@ -45,13 +50,46 @@ void USInteractionComponent::PrimaryInteract()
 	FVector Start;
 	FVector End;
 
-	FVector EyeLocation;
-	FRotator EyeRotation;
-	MyOwner->GetActorEyesViewPoint(EyeLocation, EyeRotation);
-	Start = EyeLocation;
+	ASCharacter* MyCharacter = Cast<ASCharacter>(MyOwner);
+	if (MyCharacter)
+	{
+		UCameraComponent* CameraComp = Cast<UCameraComponent>(MyCharacter->GetComponentByClass(UCameraComponent::StaticClass()));
+		FVector CameraLocation = CameraComp->GetComponentLocation();
+		FRotator CameraRotator = CameraComp->GetComponentRotation();
+		FVector TraceStart = CameraLocation;
+		FVector TraceEnd = CameraLocation + (CameraRotator.Vector() * 1000);
+		FHitResult Hit;
+		FCollisionObjectQueryParams ObjParams;
+		ObjParams.AddObjectTypesToQuery(ECC_WorldDynamic);
+		ObjParams.AddObjectTypesToQuery(ECC_WorldStatic);
+		ObjParams.AddObjectTypesToQuery(ECC_Pawn);
+		FCollisionShape Shape;
+		Shape.SetSphere(10.0f);
+		FCollisionQueryParams Params;
+		Params.AddIgnoredActor(MyOwner);
+		if (GetWorld()->SweepSingleByObjectType(Hit, TraceStart, TraceEnd, FQuat::Identity, ObjParams, Shape, Params))
+		{
+			Start = MyCharacter->GetMesh()->GetSocketLocation("Eyes_Position");
+			End = Hit.ImpactPoint;
+		}
+		else 
+		{
+			FVector EyeLocation;
+			FRotator EyeRotation;
+			MyOwner->GetActorEyesViewPoint(EyeLocation, EyeRotation);
+			Start = EyeLocation;
+			End = EyeLocation + (EyeRotation.Vector() * 1000);
+		}
+	}
+	else
+	{
+		FVector EyeLocation;
+		FRotator EyeRotation;
+		MyOwner->GetActorEyesViewPoint(EyeLocation, EyeRotation);
+		Start = EyeLocation;
 
-	End = EyeLocation + (EyeRotation.Vector() * 1000);
-
+		End = EyeLocation + (EyeRotation.Vector() * 1000);
+	}
 	//FHitResult Hit;
 	//bool bBlockingHit = GetWorld()->LineTraceSingleByObjectType(Hit, Start, End, ObjectQueryParams);
 	TArray<FHitResult> Hits;
