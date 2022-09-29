@@ -27,13 +27,32 @@ float USAttributeComponent::GetHealthMax() const
 	return HealthMax;
 }
 
-bool USAttributeComponent::ApplyHealthChange(float Delta)
+bool USAttributeComponent::ApplyHealthChange(AActor* InstigatorActor, float Delta)
 {
 	UE_LOG(LogTemp, Log, TEXT("ApplyHealthChange %f"), Delta);
 	float OldHealth = Health;
 	Health = FMath::Clamp(Health + Delta, 0.0f, HealthMax);
 	float ActualDelta = Health - OldHealth;
-	OnHealthChanged.Broadcast(nullptr, this, Health, Delta);
+	OnHealthChanged.Broadcast(InstigatorActor, this, Health, Delta);
 	return ActualDelta != 0;
+}
+
+USAttributeComponent* USAttributeComponent::GetAttributes(AActor* FromActor)
+{
+	if (FromActor)
+	{
+		return Cast<USAttributeComponent>(FromActor->GetComponentByClass(USAttributeComponent::StaticClass()));
+	}
+	else return nullptr;
+}
+
+bool USAttributeComponent::IsActorAlive(AActor* AActor)
+{
+	USAttributeComponent* AttributeComp = GetAttributes(AActor);
+	if (AttributeComp)
+	{
+		return AttributeComp->IsAlive();
+	}
+	return false;
 }
 

@@ -3,12 +3,13 @@
 
 #include "SMagicProjectile.h"
 #include "SAttributeComponent.h"
+#include "DrawDebugHelpers.h"
+#include "AI/SAICharacter.h"
+
 
 // Sets default values
 ASMagicProjectile::ASMagicProjectile()
 {
- 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
-	PrimaryActorTick.bCanEverTick = true;
 
 	SphereComponent = CreateDefaultSubobject<USphereComponent>("SphereComponent");
 	//SphereComponent->SetCollisionObjectType(ECC_WorldDynamic);
@@ -31,28 +32,17 @@ ASMagicProjectile::ASMagicProjectile()
 
 void ASMagicProjectile::OnActorOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
-	if (OtherActor && OtherActor != GetInstigator())
+	DrawDebugSphere(GetWorld(), SweepResult.ImpactPoint, 30.0f, 16, FColor::Red, false, 5.0f);
+	UE_LOG(LogTemp, Log, TEXT("%i"), OtherActor->GetClass() == GetInstigator()->GetClass());
+	if (OtherActor && OtherActor != GetInstigator() && !(OtherActor->IsA<ASAICharacter>() && GetInstigator()->IsA<ASAICharacter>()))
 	{
+		
 		USAttributeComponent* AttributeComp = Cast<USAttributeComponent>(OtherActor->GetComponentByClass(USAttributeComponent::StaticClass()));
 		if (AttributeComp)
 		{
-			AttributeComp->ApplyHealthChange(-DamageAmount);
+			AttributeComp->ApplyHealthChange(GetInstigator(), -DamageAmount);
 			Destroy();
 		}
 	}
-}
-
-// Called when the game starts or when spawned
-void ASMagicProjectile::BeginPlay()
-{
-	Super::BeginPlay();
-	
-}
-
-// Called every frame
-void ASMagicProjectile::Tick(float DeltaTime)
-{
-	Super::Tick(DeltaTime);
-
 }
 

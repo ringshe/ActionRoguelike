@@ -19,7 +19,7 @@ void ASPowerupActor_HealthPotion::Interact_Implementation(APawn* InstigatorPawn)
 
 	if (ensure(AttributeComp) && !AttributeComp->IsFullHealth())
 	{
-		if (AttributeComp->ApplyHealthChange(AttributeComp->GetHealthMax()))
+		if (AttributeComp->ApplyHealthChange(nullptr, AttributeComp->GetHealthMax()))
 		{
 			HideAndCooldownPowerup();
 		}
