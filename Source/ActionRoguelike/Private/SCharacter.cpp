@@ -180,3 +180,8 @@ void ASCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponen
 	PlayerInputComponent->BindAction("Jump", IE_Pressed, this, &ASCharacter::Jump);
 }
 
+void ASCharacter::HealSelf(float Amount /* = 100.0f */)
+{
+	AttributeComp->ApplyHealthChange(this, Amount);
+}
+

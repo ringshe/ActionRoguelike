@@ -6,6 +6,8 @@
 #include "BehaviorTree/BlackboardComponent.h"
 #include "DrawDebugHelpers.h"
 #include "BrainComponent.h"
+#include "Blueprint/UserWidget.h"
+#include "SWorldUserWidget.h"
 
 // Sets default values
 ASAICharacter::ASAICharacter()
@@ -30,7 +32,7 @@ void ASAICharacter::SetTargetActor(AActor* NewTarget)
 	if (AIC)
 	{
 		AIC->GetBlackboardComponent()->SetValueAsObject("TargetActor", NewTarget);
-		DrawDebugString(GetWorld(), GetActorLocation(), "Player Spotted", nullptr, FColor::White, 4.0f, true);
+		//DrawDebugString(GetWorld(), GetActorLocation(), "Player Spotted", nullptr, FColor::White, 4.0f, true);
 	}
 }
 
@@ -44,8 +46,18 @@ void ASAICharacter::OnHealthChanged(AActor* InstigatorActor, USAttributeComponen
             SetTargetActor(InstigatorActor);
         }
 
-        GetMesh()->SetScalarParameterValueOnMaterials(TimeToHitParamName, GetWorld()->TimeSeconds);
+        if (ActiveHealthBar == nullptr)
+        {
+			ActiveHealthBar = CreateWidget<USWorldUserWidget>(GetWorld(), HealthBarWidgetClass);
+			if (ActiveHealthBar)
+			{
+                ActiveHealthBar->AttachedActor = this;
+				ActiveHealthBar->AddToViewport();
+			}
+        }
+        
 
+        GetMesh()->SetScalarParameterValueOnMaterials(TimeToHitParamName, GetWorld()->TimeSeconds);
         if (NewHealth <= 0.0f)
         {
             // stop BT 

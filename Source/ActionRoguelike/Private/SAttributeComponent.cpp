@@ -11,6 +11,10 @@ USAttributeComponent::USAttributeComponent()
 }
 
 
+bool USAttributeComponent::Kill(AActor* InstigatorActor)
+{
+	return ApplyHealthChange(InstigatorActor, -GetHealthMax());
+}
 
 bool USAttributeComponent::IsAlive() const
 {

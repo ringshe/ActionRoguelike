@@ -6,6 +6,7 @@
 #include "GameFramework/Character.h"
 #include "Perception/PawnSensingComponent.h"
 #include "SAttributeComponent.h"
+#include "SWorldUserWidget.h"
 #include "SAICharacter.generated.h"
 
 UCLASS()
@@ -16,7 +17,13 @@ class ACTIONROGUELIKE_API ASAICharacter : public ACharacter
 public:
 	// Sets default values for this character's properties
 	ASAICharacter();
+
 protected:
+
+	USWorldUserWidget* ActiveHealthBar;
+
+	UPROPERTY(EditDefaultsOnly, Category = "UI")
+	TSubclassOf<UUserWidget> HealthBarWidgetClass;
 
 	UPROPERTY(VisibleAnywhere, Category = "Effects")
 	FName TimeToHitParamName;
