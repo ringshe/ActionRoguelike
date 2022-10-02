@@ -52,7 +52,6 @@ bool USAttributeComponent::ApplyHealthChange(AActor* InstigatorActor, float Delt
 		Delta *= DamageMultiplier;
 	}
 
-	UE_LOG(LogTemp, Log, TEXT("ApplyHealthChange %f"), Delta);
 	float OldHealth = Health;
 	Health = FMath::Clamp(Health + Delta, 0.0f, HealthMax);
 	float ActualDelta = Health - OldHealth;

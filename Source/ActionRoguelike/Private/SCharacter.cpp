@@ -25,6 +25,8 @@ ASCharacter::ASCharacter()
 
 	AttributeComp = CreateDefaultSubobject<USAttributeComponent>("AttributeComp");
 
+	ActionComp = CreateDefaultSubobject<USActionComponent>("ActionComp");
+
 	GetCharacterMovement()->bOrientRotationToMovement = true;
 	
 	bUseControllerRotationYaw = false;
@@ -44,7 +46,6 @@ void ASCharacter::OnHealthChanged(AActor* InstigatorActor, USAttributeComponent*
 		DisableInput(PC);
 	}
 }
-
 
 
 // Called when the game starts or when spawned
@@ -74,79 +75,35 @@ void ASCharacter::MoveRight(float value)
 	AddMovementInput(RightVector, value);
 }
 
+void ASCharacter::SprintStart()
+{
+	ActionComp->StartActionByName(this, "Sprint");
+}
+
+void ASCharacter::SprintStop()
+{
+	ActionComp->StopActionByName(this, "Sprint");
+}
+
 // ¹¥»÷
 void ASCharacter::PrimaryAttack()
 {
-	PlayAnimMontage(AttackAnim);
+	//PlayAnimMontage(AttackAnim);
 
-	GetWorldTimerManager().SetTimer(TimerHandle_PrimaryAttack, this, &ASCharacter::PrimaryAttack_TimeElapsed, AttackAnimDelay);
+	//GetWorldTimerManager().SetTimer(TimerHandle_PrimaryAttack, this, &ASCharacter::PrimaryAttack_TimeElapsed, AttackAnimDelay);
+	ActionComp->StartActionByName(this, "PrimaryAttack");
 
-
-}
-
-void ASCharacter::PrimaryAttack_TimeElapsed()
-{
-	UE_LOG(LogTemp, Log, TEXT("123"));
-	SpawnProjectile(ProjectileClass);
 }
 
 void ASCharacter::Dash()
 {
-	PlayAnimMontage(AttackAnim);
-	GetWorldTimerManager().SetTimer(TimerHandle_Dash, this, &ASCharacter::Dash_TimeElapsed, AttackAnimDelay);
+	ActionComp->StartActionByName(this, "Dash");
 }
 
-void ASCharacter::Dash_TimeElapsed()
-{
-	SpawnProjectile(DashProjectileClass);
-}
 
 void ASCharacter::BlackholeAttack()
 {
-	PlayAnimMontage(AttackAnim);
-	GetWorldTimerManager().SetTimer(TimerHandle_BlackholeAttack, this, &ASCharacter::BlackholeAttack_TimeElapsed, AttackAnimDelay);
-}
-
-void ASCharacter::BlackholeAttack_TimeElapsed()
-{
-	UE_LOG(LogTemp, Log, TEXT("123"));
-	SpawnProjectile(BlackholeProjectileClass);
-}
-
-void ASCharacter::SpawnProjectile(TSubclassOf<AActor> ClassToSpawn)
-{
-	if (ensureAlways(ClassToSpawn))
-	{
-		FVector HandLoaction = GetMesh()->GetSocketLocation("Muzzle_01");
-		FActorSpawnParameters SpawnParams;
-		SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
-		SpawnParams.Instigator = this;
-
-		FCollisionShape Shape;
-		Shape.SetSphere(10.0f);
-
-		FCollisionQueryParams Params;
-		Params.AddIgnoredActor(this);
-
-		FCollisionObjectQueryParams ObjParams;
-		ObjParams.AddObjectTypesToQuery(ECC_WorldDynamic);
-		ObjParams.AddObjectTypesToQuery(ECC_WorldStatic);
-		ObjParams.AddObjectTypesToQuery(ECC_Pawn);
-
-		FVector TraceStart = CameraComponent->GetComponentLocation();
-		FVector TraceEnd = CameraComponent->GetComponentLocation() + (CameraComponent->GetComponentRotation().Vector() * 5000);
-
-		FHitResult Hit;
-		if (GetWorld()->SweepSingleByObjectType(Hit, TraceStart, TraceEnd, FQuat::Identity, ObjParams, Shape, Params))
-		{
-			TraceEnd = Hit.ImpactPoint;
-		}
-
-		FRotator ProjRotation = FRotationMatrix::MakeFromX(TraceEnd - HandLoaction).Rotator();
-
-		FTransform SpawnTM = FTransform(ProjRotation, HandLoaction);
-		GetWorld()->SpawnActor<AActor>(ClassToSpawn, SpawnTM, SpawnParams);
-	}
+	ActionComp->StartActionByName(this, "Blackhole");
 }
 
 void ASCharacter::PrimaryInteract()
@@ -178,6 +135,8 @@ void ASCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponen
 	PlayerInputComponent->BindAction("PrimaryInteract", IE_Pressed, this, &ASCharacter::PrimaryInteract);
 
 	PlayerInputComponent->BindAction("Jump", IE_Pressed, this, &ASCharacter::Jump);
+	PlayerInputComponent->BindAction("Sprint", IE_Pressed, this, &ASCharacter::SprintStart);
+	PlayerInputComponent->BindAction("Sprint", IE_Released, this, &ASCharacter::SprintStop);
 }
 
 void ASCharacter::HealSelf(float Amount /* = 100.0f */)
