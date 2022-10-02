@@ -26,7 +26,7 @@ ASCharacter::ASCharacter()
 	AttributeComp = CreateDefaultSubobject<USAttributeComponent>("AttributeComp");
 
 	GetCharacterMovement()->bOrientRotationToMovement = true;
-
+	
 	bUseControllerRotationYaw = false;
 }
 
