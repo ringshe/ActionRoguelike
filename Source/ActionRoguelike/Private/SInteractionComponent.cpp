@@ -16,33 +16,26 @@ static TAutoConsoleVariable<bool> CVarDebugDrawInteraction(TEXT("su.InteractionD
 // Sets default values for this component's properties
 USInteractionComponent::USInteractionComponent()
 {
-	// Set this component to be initialized when the game starts, and to be ticked every frame.  You can turn these features
-	// off to improve performance if you don't need them.
 	PrimaryComponentTick.bCanEverTick = true;
-
-	// ...
+	TraceRadius = 10.0f;
+	TraceDistance = 500.0f;
+	CollisionChannel = ECC_WorldDynamic;
 }
 
-
-// Called when the game starts
 void USInteractionComponent::BeginPlay()
 {
 	Super::BeginPlay();
 
-	// ...
 	
 }
 
-
-// Called every frame
 void USInteractionComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
-
-	// ...
+	FindBestInteractable();
 }
 
-void USInteractionComponent::PrimaryInteract()
+void USInteractionComponent::FindBestInteractable()
 {
 	bool bDebugDraw = CVarDebugDrawInteraction.GetValueOnGameThread();
 
@@ -60,14 +53,12 @@ void USInteractionComponent::PrimaryInteract()
 		FVector CameraLocation = CameraComp->GetComponentLocation();
 		FRotator CameraRotator = CameraComp->GetComponentRotation();
 		FVector TraceStart = CameraLocation;
-		FVector TraceEnd = CameraLocation + (CameraRotator.Vector() * 1000);
+		FVector TraceEnd = CameraLocation + (CameraRotator.Vector() * TraceDistance);
 		FHitResult Hit;
 		FCollisionObjectQueryParams ObjParams;
-		ObjParams.AddObjectTypesToQuery(ECC_WorldDynamic);
-		ObjParams.AddObjectTypesToQuery(ECC_WorldStatic);
-		ObjParams.AddObjectTypesToQuery(ECC_Pawn);
+		ObjParams.AddObjectTypesToQuery(CollisionChannel);
 		FCollisionShape Shape;
-		Shape.SetSphere(10.0f);
+		Shape.SetSphere(TraceRadius);
 		FCollisionQueryParams Params;
 		Params.AddIgnoredActor(MyOwner);
 		if (GetWorld()->SweepSingleByObjectType(Hit, TraceStart, TraceEnd, FQuat::Identity, ObjParams, Shape, Params))
@@ -81,7 +72,7 @@ void USInteractionComponent::PrimaryInteract()
 			FRotator EyeRotation;
 			MyOwner->GetActorEyesViewPoint(EyeLocation, EyeRotation);
 			Start = EyeLocation;
-			End = EyeLocation + (EyeRotation.Vector() * 1000);
+			End = EyeLocation + (EyeRotation.Vector() * TraceDistance);
 		}
 	}
 	else
@@ -91,16 +82,19 @@ void USInteractionComponent::PrimaryInteract()
 		MyOwner->GetActorEyesViewPoint(EyeLocation, EyeRotation);
 		Start = EyeLocation;
 
-		End = EyeLocation + (EyeRotation.Vector() * 1000);
+		End = EyeLocation + (EyeRotation.Vector() * TraceDistance);
 	}
 	//FHitResult Hit;
 	//bool bBlockingHit = GetWorld()->LineTraceSingleByObjectType(Hit, Start, End, ObjectQueryParams);
 	TArray<FHitResult> Hits;
 	FCollisionShape Shape;
 	float Radius = 30.0f;
-	Shape.SetSphere(Radius);
+	Shape.SetSphere(TraceRadius);
 	bool bBlockingHit = GetWorld()->SweepMultiByObjectType(Hits, Start, End, FQuat::Identity, ObjectQueryParams, Shape);
 	FColor LineColor = bBlockingHit ? FColor::Green : FColor::Red;
+
+	FocusedActor = nullptr;
+
 	for (FHitResult& Hit : Hits)
 	{
 		if (bDebugDraw)
@@ -112,20 +106,58 @@ void USInteractionComponent::PrimaryInteract()
 		{
 			if (HitActor->Implements<USGameplayInterface>())
 			{
-				APawn* MyPawn = Cast<APawn>(MyOwner);
-				ISGameplayInterface::Execute_Interact(HitActor, MyPawn);
-				FRotator NewRotator = FRotationMatrix::MakeFromX(End - Start).Rotator();
-				NewRotator.Pitch = 0.f;
-				NewRotator.Roll = 0.f;
-				//MyCharacter->AddMovementInput(NewRotator.Vector(), 0.01);
-				MyCharacter->GetCharacterMovement()->MoveUpdatedComponent(FVector::ZeroVector, NewRotator, false);
+				FocusedActor = HitActor;
+				break;
 			}
 		}
 		
 	}
+
+	if (FocusedActor)
+	{
+		if (DefaultWidgetInstance == nullptr && ensure(DefaultWidgetClass))
+		{
+			DefaultWidgetInstance = CreateWidget<USWorldUserWidget>(GetWorld(), DefaultWidgetClass);
+		}
+		if (DefaultWidgetInstance)
+		{
+			DefaultWidgetInstance->AttachedActor = FocusedActor;
+			if (!DefaultWidgetInstance->IsInViewport())
+			{
+				DefaultWidgetInstance->AddToViewport();
+			}
+		}
+	}
+	else
+	{
+		if (DefaultWidgetInstance)
+		{
+			DefaultWidgetInstance->RemoveFromParent();
+		}
+	}
+
 	if (bDebugDraw)
 	{
 		DrawDebugLine(GetWorld(), Start, End, LineColor, false, 2.0f, 0, 2.0f);
 	}
-	
+}
+
+
+void USInteractionComponent::PrimaryInteract()
+{
+	if (FocusedActor == nullptr)
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 1.0f, FColor::Red, "No FocusActor to interact.");
+		return;
+	}
+	AActor* MyOwner = GetOwner();
+	APawn* MyPawn = Cast<APawn>(MyOwner);
+	ISGameplayInterface::Execute_Interact(FocusedActor, MyPawn);
+	//FRotator NewRotator = FRotationMatrix::MakeFromX(End - Start).Rotator();
+	//NewRotator.Pitch = 0.f;
+	//NewRotator.Roll = 0.f;
+	//ASCharacter* MyCharacter = Cast<ASCharacter>(MyOwner);
+	////MyCharacter->AddMovementInput(NewRotator.Vector(), 0.01);
+	//MyCharacter->GetCharacterMovement()->MoveUpdatedComponent(FVector::ZeroVector, NewRotator, false);
+	//
 }

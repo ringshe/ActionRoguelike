@@ -6,6 +6,7 @@
 #include "DrawDebugHelpers.h"
 #include "AI/SAICharacter.h"
 #include "SGameplayFunctionLibrary.h"
+#include "SActionComponent.h"
 
 
 // Sets default values
@@ -37,15 +38,21 @@ void ASMagicProjectile::OnActorOverlap(UPrimitiveComponent* OverlappedComponent,
 	if (OtherActor && OtherActor != GetInstigator() && !(OtherActor->IsA<ASAICharacter>() && GetInstigator()->IsA<ASAICharacter>()))
 	{
 
-	//	USAttributeComponent* AttributeComp = Cast<USAttributeComponent>(OtherActor->GetComponentByClass(USAttributeComponent::StaticClass()));
-	//	if (AttributeComp)
-	//	{
-	//		AttributeComp->ApplyHealthChange(GetInstigator(), -DamageAmount);
-	//		Destroy();
-	//	}
+		USActionComponent* ActionComp = Cast<USActionComponent>(OtherActor->GetComponentByClass(USActionComponent::StaticClass()));
+		if (ActionComp && ActionComp->ActiveGameplayTags.HasTag(ParryTag))
+		{
+			MovementComponent->Velocity = -MovementComponent->Velocity;
+			SetInstigator(Cast<APawn>(OtherActor));
+			return;
+		}
+
 		if (USGameplayFunctionLibrary::ApplyDirectionDamage(GetInstigator(), OtherActor, DamageAmount, SweepResult))
 		{
 			Destroy();
+			if (ActionComp)
+			{
+				ActionComp->AddAction(GetInstigator(), BurnignActionClass);
+			}
 		}
 	}
 

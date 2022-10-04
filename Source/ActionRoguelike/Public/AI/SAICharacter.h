@@ -7,6 +7,7 @@
 #include "Perception/PawnSensingComponent.h"
 #include "SAttributeComponent.h"
 #include "SWorldUserWidget.h"
+#include "SActionComponent.h"
 #include "SAICharacter.generated.h"
 
 UCLASS()
@@ -40,6 +41,9 @@ protected:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 	USAttributeComponent* AttributeComp;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
+	USActionComponent* ActionComp;
 
 	UFUNCTION()
 	void OnPawnSeen(APawn* Pawn);

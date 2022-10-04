@@ -17,7 +17,7 @@ class ACTIONROGUELIKE_API ASPowerupActor_HealthPotion : public ASPowerupActor
 	GENERATED_BODY()
 protected:
 	UPROPERTY(EditDefaultsOnly)
-	UStaticMeshComponent* MeshComp;
+	int32 CreditCost;
 public:
 	ASPowerupActor_HealthPotion();
 

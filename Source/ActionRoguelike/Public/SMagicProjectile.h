@@ -7,6 +7,8 @@
 #include "Components/SphereComponent.h"
 #include "GameFramework/ProjectileMovementComponent.h"
 #include "Particles/ParticleSystemComponent.h"
+#include "GameplayTagContainer.h"
+#include "SActionEffect.h"
 #include "SMagicProjectile.generated.h"
 
 UCLASS()
@@ -36,4 +38,9 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category="Damage")
 	float DamageAmount;
 	
+	UPROPERTY(EditDefaultsOnly, Category = "Damage")
+	FGameplayTag ParryTag;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Damage")
+	TSubclassOf<USActionEffect> BurnignActionClass;
 };

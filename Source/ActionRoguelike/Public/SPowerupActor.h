@@ -29,6 +29,8 @@ protected:
 	UPROPERTY(VisibleAnywhere, Category = "Components")
 	USphereComponent* SphereComp;
 	
+	UPROPERTY(EditDefaultsOnly, Category = "Components")
+	UStaticMeshComponent* MeshComp;
 public:
 	void Interact_Implementation(APawn* InstigatorPawn) override;
 public:	
