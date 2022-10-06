@@ -30,6 +30,8 @@ ASMagicProjectile::ASMagicProjectile()
 	MovementComponent->bInitialVelocityInLocalSpace = true;
 
 	DamageAmount = 50.0f;
+
+	SetReplicates(true);
 }
 
 void ASMagicProjectile::OnActorOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
@@ -49,9 +51,9 @@ void ASMagicProjectile::OnActorOverlap(UPrimitiveComponent* OverlappedComponent,
 		if (USGameplayFunctionLibrary::ApplyDirectionDamage(GetInstigator(), OtherActor, DamageAmount, SweepResult))
 		{
 			Destroy();
-			if (ActionComp)
+			if (ActionComp && HasAuthority())
 			{
-				ActionComp->AddAction(GetInstigator(), BurnignActionClass);
+				ActionComp->AddAction(GetInstigator(), BurningActionClass);
 			}
 		}
 	}

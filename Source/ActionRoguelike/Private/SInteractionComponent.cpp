@@ -32,7 +32,12 @@ void USInteractionComponent::BeginPlay()
 void USInteractionComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
-	FindBestInteractable();
+
+	APawn* MyPawn = Cast<APawn>(GetOwner());
+	if (MyPawn->IsLocallyControlled())
+	{
+		FindBestInteractable();
+	}
 }
 
 void USInteractionComponent::FindBestInteractable()
@@ -142,17 +147,9 @@ void USInteractionComponent::FindBestInteractable()
 	}
 }
 
-
 void USInteractionComponent::PrimaryInteract()
 {
-	if (FocusedActor == nullptr)
-	{
-		GEngine->AddOnScreenDebugMessage(-1, 1.0f, FColor::Red, "No FocusActor to interact.");
-		return;
-	}
-	AActor* MyOwner = GetOwner();
-	APawn* MyPawn = Cast<APawn>(MyOwner);
-	ISGameplayInterface::Execute_Interact(FocusedActor, MyPawn);
+	ServerInteract(FocusedActor);
 	//FRotator NewRotator = FRotationMatrix::MakeFromX(End - Start).Rotator();
 	//NewRotator.Pitch = 0.f;
 	//NewRotator.Roll = 0.f;
@@ -161,3 +158,16 @@ void USInteractionComponent::PrimaryInteract()
 	//MyCharacter->GetCharacterMovement()->MoveUpdatedComponent(FVector::ZeroVector, NewRotator, false);
 	//
 }
+
+void USInteractionComponent::ServerInteract_Implementation(AActor* InFocus)
+{
+	if (InFocus == nullptr)
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 1.0f, FColor::Red, "No FocusActor to interact.");
+		return;
+	}
+	AActor* MyOwner = GetOwner();
+	APawn* MyPawn = Cast<APawn>(MyOwner);
+	ISGameplayInterface::Execute_Interact(InFocus, MyPawn);
+}
+

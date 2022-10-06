@@ -9,15 +9,32 @@
 #include "SActionComponent.h"
 #include "SAction.generated.h"
 
-/**
- * 
- */
+
+USTRUCT()
+struct FActionRepData
+{
+	GENERATED_BODY()
+
+public:
+
+	UPROPERTY()
+	bool bIsRunning;
+
+	UPROPERTY()
+	AActor* Instigator;
+};
+
+
 UCLASS(Blueprintable)
 class ACTIONROGUELIKE_API USAction : public UObject
 {
 	GENERATED_BODY()
 
 protected:
+
+	UPROPERTY(Replicated)
+	USActionComponent* ActionComp;
+
 	UFUNCTION(BlueprintCallable, Category = "Action")
 	USActionComponent* GetOwningComponent() const;
 
@@ -27,9 +44,16 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category = "Tags")
 	FGameplayTagContainer BlockedTags;
 
-	bool bIsRunning;
+	UPROPERTY(ReplicatedUsing = "OnRep_RepData")
+	FActionRepData RepData;
+
+	UFUNCTION()
+	void OnRep_RepData();
 
 public:
+
+	void Initialize(USActionComponent* NewActionComp);
+
 	UPROPERTY(EditDefaultsOnly, Category = "Action")
 	bool bAutoStart;
 
@@ -49,4 +73,9 @@ public:
 	FName ActionName;
 
 	UWorld* GetWorld() const override;
+
+	bool IsSupportedForNetworking() const override
+	{
+		return true;
+	}
 };

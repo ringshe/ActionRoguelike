@@ -42,5 +42,5 @@ protected:
 	FGameplayTag ParryTag;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Damage")
-	TSubclassOf<USActionEffect> BurnignActionClass;
+	TSubclassOf<USActionEffect> BurningActionClass;
 };
